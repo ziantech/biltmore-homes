@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@lib/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise< { id: string } >}) {
     try {
-        // Await params (Next.js 15 fix)
-        const { id } = params;
+        const id = (await params).id;
 
         if (!id) {
             return NextResponse.json({ error: "Missing facility ID" }, { status: 400 });
@@ -19,7 +18,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
         const facility = result.rows[0];
 
-        // ✅ Convert database fields (snake_case) to TypeScript fields (camelCase)
         const formattedFacility = {
             id: facility.id,
             name: facility.name,
@@ -30,13 +28,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             zipcode: facility.zipcode,
             maxOccupancy: facility.max_occupancy,
             availableBeds: facility.available_beds,
-            aboutUs: facility.about_us,  // Convert "about_us" → "aboutUs"
+            aboutUs: facility.about_us,
             services: facility.services,
             dailyActivities: facility.daily_activities,
             pictures: facility.pictures,
-            menu: facility.menu,  // Already in correct format (JSONB)
-            contacts: facility.contacts,  // Already in correct format (JSONB)
-            managerName: facility.manager_name, // Convert "manager_name" → "managerName"
+            menu: facility.menu,
+            contacts: facility.contacts,
+            managerName: facility.manager_name,
             created_at: new Date(facility.created_at),
             updated_at: new Date(facility.updated_at),
         };
@@ -48,9 +46,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{id: string}> }) {
     try {
-        const { id } = await context.params;
+        const id = (await params).id;
         const { field, value } = await req.json();
 
         console.log("🔍 PATCH Request Received:");
@@ -58,7 +56,6 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
         console.log("Value:", value);
         console.log("Type of Value:", typeof value);
 
-        // ✅ Map frontend field names to correct database column names
         const dbFieldMap: Record<string, string> = {
             dailyActivities: "daily_activities",
             maxOccupancy: "max_occupancy",
@@ -68,7 +65,6 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
         };
         const dbField = dbFieldMap[field] || field;
 
-        // ✅ Ensure allowed fields
         const allowedFields = [
             "name", "address", "city", "state", "zipcode",
             "manager_name", "about_us", "pictures", "logo",
@@ -83,13 +79,12 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
         let query = `UPDATE facilities SET ${dbField} = $1 WHERE id = $2 RETURNING *;`;
         let queryParams = [value, id];
 
-        // ✅ Convert `daily_activities`, `services`, `menu`, `contacts` to appropriate PostgreSQL types
         if (dbField === "daily_activities" || dbField === "services") {
             query = `UPDATE facilities SET ${dbField} = $1::TEXT[] WHERE id = $2 RETURNING *;`;
         }
         if (dbField === "contacts" || dbField === "menu") {
             query = `UPDATE facilities SET ${dbField} = $1::jsonb WHERE id = $2 RETURNING *;`;
-            queryParams = [JSON.stringify(value), id];  // Convert JavaScript object to JSON
+            queryParams = [JSON.stringify(value), id];
         }
 
         const result = await pool.query(query, queryParams);

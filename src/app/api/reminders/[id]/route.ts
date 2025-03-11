@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@lib/db";
 
 
-export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, {params}: { params: Promise<{ id: string } >}) {
     try {
-        const { id } = context.params;
-
+        const id = (await params).id;
         if (!id) {
             return NextResponse.json({ error: "Reminder ID is required" }, { status: 400 });
         }
@@ -60,9 +59,9 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
     }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, {params}: { params: Promise<{ id: string } >}) {
     try {
-        const { id } = context.params;
+        const id = (await params).id;
 
         if (!id) {
             return NextResponse.json({ error: "Reminder ID is required" }, { status: 400 });
