@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@lib/db";
 
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         // Await params (Next.js 15 fix)
-        const { id } = await context.params;
+        const { id } = params;
 
         if (!id) {
             return NextResponse.json({ error: "Missing facility ID" }, { status: 400 });
