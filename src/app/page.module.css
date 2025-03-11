@@ -6,15 +6,16 @@
   --button-primary-hover: #383838;
   --button-secondary-hover: #f2f2f2;
 
-  display: grid;
-  grid-template-rows: 20px 1fr 20px;
-  align-items: center;
-  justify-items: center;
+  display: flex; /* ✅ Change from grid to flex */
+  flex-direction: column;
+  align-items: flex-start; /* ✅ Align everything to the start */
+  justify-content: flex-start; /* ✅ Start content from the top */
   min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
+  padding: 0; /* ✅ Remove extra padding */
+  gap: 32px; /* ✅ Reduce gap for tighter layout */
   font-family: var(--font-geist-sans);
 }
+
 
 @media (prefers-color-scheme: dark) {
   .page {
